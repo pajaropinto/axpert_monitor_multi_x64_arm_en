@@ -10,6 +10,11 @@ cargo test
 // On a network share without exec permission, run it through sh:
 sh ./docker/build_and_push.sh
 
+// The pushed image is multi-architecture (x86 + ARM); Docker picks the right one
+// on each host. The other architecture is built under emulation (QEMU): slow.
+// Only one architecture, e.g. ARM:
+PLATFORMS=linux/arm64 sh ./docker/build_and_push.sh
+
 // Only build and test, without pushing:
 sh ./docker/build_and_push.sh --no-push
 
