@@ -12,7 +12,7 @@
 ///   If a1=1 (inverter fault active) → severity = 2 (Fault)
 ///   If a1=0                         → severity = 1 (Warning)
 ///
-/// A consolidated `inverter_status` field is also computed:
+/// A consolidated `inverter_status` field is also computed (see `status`):
 ///   0 = all OK
 ///   1 = at least one Warning, no Faults
 ///   2 = at least one Fault (highest priority)
@@ -110,28 +110,36 @@ pub fn parse(payload: &str) -> Result<QpiwsData> {
         inverter_status: 0, // filled below
     };
 
-    // Consolidated status: highest severity across all warnings
-    let max = [
-        data.warn_pv_loss, data.warn_inverter_fault, data.warn_bus_over,
-        data.warn_bus_under, data.warn_bus_soft_fail, data.warn_line_fail,
-        data.warn_opv_short, data.warn_inverter_voltage_low, data.warn_inverter_voltage_high,
-        data.warn_over_temperature, data.warn_fan_locked, data.warn_battery_voltage_high,
-        data.warn_battery_low_alarm, data.warn_battery_under_shutdown, data.warn_battery_derating,
-        data.warn_overload, data.warn_eeprom_fault, data.warn_inverter_over_current,
-        data.warn_inverter_soft_fail, data.warn_self_test_fail, data.warn_op_dc_voltage_over,
-        data.warn_bat_open, data.warn_current_sensor_fail, data.warn_battery_short,
-        data.warn_power_limit, data.warn_pv_voltage_high, data.warn_mppt_overload_fault,
-        data.warn_mppt_overload_warning, data.warn_battery_too_low_charge,
-    ]
-    .iter()
-    .copied()
-    .max()
-    .unwrap_or(0);
-
+    let status = data.status(false);
     Ok(QpiwsData {
-        inverter_status: max,
+        inverter_status: status,
         ..data
     })
+}
+
+impl QpiwsData {
+    /// Consolidated status: highest severity across all warnings.
+    /// `ignore_line_fail`: off-grid installation, where a missing grid
+    /// (a5 Line fail, the AC input warning) is the normal state.
+    pub fn status(&self, ignore_line_fail: bool) -> u8 {
+        let line_fail = if ignore_line_fail { 0 } else { self.warn_line_fail };
+        [
+            self.warn_pv_loss, self.warn_inverter_fault, self.warn_bus_over,
+            self.warn_bus_under, self.warn_bus_soft_fail, line_fail,
+            self.warn_opv_short, self.warn_inverter_voltage_low, self.warn_inverter_voltage_high,
+            self.warn_over_temperature, self.warn_fan_locked, self.warn_battery_voltage_high,
+            self.warn_battery_low_alarm, self.warn_battery_under_shutdown, self.warn_battery_derating,
+            self.warn_overload, self.warn_eeprom_fault, self.warn_inverter_over_current,
+            self.warn_inverter_soft_fail, self.warn_self_test_fail, self.warn_op_dc_voltage_over,
+            self.warn_bat_open, self.warn_current_sensor_fail, self.warn_battery_short,
+            self.warn_power_limit, self.warn_pv_voltage_high, self.warn_mppt_overload_fault,
+            self.warn_mppt_overload_warning, self.warn_battery_too_low_charge,
+        ]
+        .iter()
+        .copied()
+        .max()
+        .unwrap_or(0)
+    }
 }
 
 enum Kind {

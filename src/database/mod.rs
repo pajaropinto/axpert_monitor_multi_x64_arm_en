@@ -615,7 +615,7 @@ mod tests {
             }),
             ..Default::default()
         };
-        inv.compute_calculated(100.0);
+        inv.compute_calculated(100.0, false);
         inv
     }
 

@@ -1,10 +1,10 @@
 # Build output
-target/
+/target/
 
 # Local installation data: real configuration (credentials, IPs) and database
-config/
-data/
-storage/
+/config/
+/data/
+/storage/
 *.db
 .env
 

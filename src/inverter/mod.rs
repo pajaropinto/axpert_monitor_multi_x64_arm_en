@@ -76,7 +76,9 @@ pub struct CalculatedData {
 impl InverterData {
     /// Compute calculated fields from QPIGS/QPIGS2/QMOD data.
     /// `efficiency_percent`: inverter efficiency used for the grid estimate.
-    pub fn compute_calculated(&mut self, efficiency_percent: f64) {
+    /// `off_grid_installation`: the AC input warning (Line fail) does not
+    /// count for `inverter_status`, since there is no grid to lose.
+    pub fn compute_calculated(&mut self, efficiency_percent: f64, off_grid_installation: bool) {
         if let Some(ref q) = self.qpigs {
             let pv1_power = q.pv1_input_voltage * q.pv1_input_current;
             let pv2_power = self
@@ -135,7 +137,7 @@ impl InverterData {
             let warn_status = self
                 .qpiws
                 .as_ref()
-                .map(|w| w.inverter_status)
+                .map(|w| w.status(off_grid_installation))
                 .unwrap_or(0);
             let mode_status = if self.qmod.as_ref().map(|m| m.is_fault()).unwrap_or(false) {
                 2
