@@ -14,7 +14,7 @@
 # (member of the "docker" group after logging in again, or via sudo).
 set -e
 
-IMAGE="pajaropinto/axpert_monitor_multi_es"
+IMAGE="pajaropinto/axpert_monitor_multi_x64_arm_en"
 PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
 BUILDER="axpert-multiarch"
 cd "$(dirname "$0")/.."
@@ -89,10 +89,10 @@ if ! docker login >/dev/null 2>&1 </dev/null; then
     docker login
 fi
 
-echo "==> Building ${PLATFORMS} and pushing ${IMAGE}:${VERSION}, :${TAG} and :latest"
+echo "==> Building ${PLATFORMS} and pushing ${IMAGE}:${VERSION} and :latest"
 docker buildx build --builder "$BUILDER" --platform "$PLATFORMS" --pull --push \
     --build-arg VERSION="$VERSION" \
-    -t "${IMAGE}:${VERSION}" -t "${IMAGE}:${TAG}" -t "${IMAGE}:latest" .
+    -t "${IMAGE}:${VERSION}" -t "${IMAGE}:latest" .
 
-echo "==> Published ${IMAGE}:${VERSION}, :${TAG} and :latest"
+echo "==> Published ${IMAGE}:${VERSION} and :latest"
 docker buildx imagetools inspect "${IMAGE}:${VERSION}" | grep -i 'platform' | sort -u

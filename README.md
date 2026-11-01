@@ -108,7 +108,7 @@ docker run -d \
   -v /persistent/path/config:/app/config \
   -v /persistent/path/data:/app/data \
   -e TZ=Europe/Madrid \
-  pajaropinto/axpert_monitor_multi_es:latest
+  pajaropinto/axpert_monitor_multi_x64_arm_en:latest
 ```
 
 ### Web interface
@@ -138,7 +138,7 @@ To build, test and publish the image: `./docker/build_and_push.sh` (see `INSTRUC
 
 The version is defined in `Cargo.toml` (`version = "X.Y.Z"`) and is used everywhere:
 
-- Docker image tags `X.Y.Z`, `X.Y` and `latest` on [Docker Hub](https://hub.docker.com/r/pajaropinto/axpert_monitor_multi_es), created by `docker/build_and_push.sh`.
+- Multi-architecture (x86 + ARM) Docker image tags `X.Y.Z` and `latest` on [Docker Hub](https://hub.docker.com/r/pajaropinto/axpert_monitor_multi_x64_arm_en), created by `docker/build_and_push.sh`.
 - Git tag `vX.Y.Z` in this repository.
 - The startup log line: `Axpert Multi-Inverter Monitor vX.Y.Z`.
 
