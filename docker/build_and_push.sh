@@ -4,11 +4,19 @@
 #   ./docker/build_and_push.sh            build + test + push
 #   ./docker/build_and_push.sh --no-push  build + test only
 #
+# The test runs on an image built for this machine's architecture. The image
+# pushed to Docker Hub is multi-architecture (PLATFORMS, default x86 + ARM):
+# Docker picks the right one on each host. The architecture this machine is
+# not is built under QEMU emulation, which is much slower.
+#   PLATFORMS=linux/arm64 ./docker/build_and_push.sh   push only ARM
+#
 # Run from a normal terminal where your user can use docker
 # (member of the "docker" group after logging in again, or via sudo).
 set -e
 
 IMAGE="pajaropinto/axpert_monitor_multi_es"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
+BUILDER="axpert-multiarch"
 cd "$(dirname "$0")/.."
 VERSION=$(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
 # Image tag: major.minor of the Cargo version (2.0.0 → 2.0)
@@ -67,12 +75,24 @@ if [ "$1" = "--no-push" ]; then
     exit 0
 fi
 
-echo "==> Pushing to Docker Hub"
-if ! docker push "${IMAGE}:${TAG}"; then
-    echo "Push failed — logging in to Docker Hub (use an access token as password)"
-    docker login
-    docker push "${IMAGE}:${TAG}"
+echo "==> Preparing the multi-architecture builder (${PLATFORMS})"
+# QEMU emulators for the architectures this machine is not (registered in
+# the kernel until the next reboot)
+docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null
+if ! docker buildx inspect "$BUILDER" >/dev/null 2>&1; then
+    docker buildx create --name "$BUILDER" --driver docker-container >/dev/null
 fi
-docker push "${IMAGE}:${VERSION}"
-docker push "${IMAGE}:latest"
+docker buildx inspect "$BUILDER" --bootstrap >/dev/null
+
+if ! docker login >/dev/null 2>&1 </dev/null; then
+    echo "==> Logging in to Docker Hub (use an access token as password)"
+    docker login
+fi
+
+echo "==> Building ${PLATFORMS} and pushing ${IMAGE}:${VERSION}, :${TAG} and :latest"
+docker buildx build --builder "$BUILDER" --platform "$PLATFORMS" --pull --push \
+    --build-arg VERSION="$VERSION" \
+    -t "${IMAGE}:${VERSION}" -t "${IMAGE}:${TAG}" -t "${IMAGE}:latest" .
+
 echo "==> Published ${IMAGE}:${VERSION}, :${TAG} and :latest"
+docker buildx imagetools inspect "${IMAGE}:${VERSION}" | grep -i 'platform' | sort -u
