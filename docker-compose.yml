@@ -13,7 +13,7 @@
 services:
   axpert-monitor:
     # Published on Docker Hub; build it with docker/build_and_push.sh
-    image: pajaropinto/axpert_monitor_multi_es:latest
+    image: pajaropinto/axpert_monitor_multi_x64_arm_en:latest
     pull_policy: always
     container_name: axpert_monitor_multi
     restart: always
