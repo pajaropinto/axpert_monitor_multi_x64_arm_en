@@ -233,7 +233,10 @@ async fn poll_inverter(inv: &InverterConfig, cfg: &AppConfig, state: &mut PollSt
     }
 
     // Compute derived values
-    data.compute_calculated(cfg.system.inverter_efficiency_percent);
+    data.compute_calculated(
+        cfg.system.inverter_efficiency_percent,
+        cfg.system.off_grid_installation,
+    );
 
     data
 }

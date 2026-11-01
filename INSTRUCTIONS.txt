@@ -4,7 +4,7 @@ cargo test
 
 // BUILD, TEST AND PUSH THE IMAGE TO DOCKER HUB //
 // From a terminal where your user can use docker.
-// The tags come from Cargo.toml: version = "2.1.0" → :2.1.0, :2.1 and :latest.
+// The tags come from Cargo.toml: version = "2.2.0" → :2.2.0, :2.2 and :latest.
 // If you are not logged in to Docker Hub, the script runs "docker login":
 // use your username and an access token (Docker Hub > Account settings > Personal access tokens).
 // On a network share without exec permission, run it through sh:

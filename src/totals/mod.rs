@@ -258,7 +258,7 @@ mod tests {
             }),
             ..Default::default()
         };
-        inv.compute_calculated(100.0);
+        inv.compute_calculated(100.0, false);
         inv
     }
 
@@ -341,19 +341,43 @@ mod tests {
 
         // Line mode, 90 % efficiency: 1800 W load / 0.9 from the grid
         inv.qmod = Some(qmod::parse("L").unwrap());
-        inv.compute_calculated(90.0);
+        inv.compute_calculated(90.0, false);
         assert_eq!(inv.calculated.as_ref().unwrap().grid_input_power_estimate, 2000.0);
 
         // Battery mode: the grid supplies nothing even if its voltage is present
         inv.qmod = Some(qmod::parse("B").unwrap());
-        inv.compute_calculated(90.0);
+        inv.compute_calculated(90.0, false);
         assert_eq!(inv.calculated.as_ref().unwrap().grid_input_power_estimate, 0.0);
 
         // Fault mode raises the status to fault
         inv.qmod = Some(qmod::parse("F").unwrap());
-        inv.compute_calculated(90.0);
+        inv.compute_calculated(90.0, false);
         assert_eq!(inv.inverter_status, 2);
         assert_eq!(compute(&[inv], &battery()).system_status, 2);
+    }
+
+    #[test]
+    fn off_grid_installation_ignores_line_fail() {
+        use crate::inverter::parsers::qpiws;
+        let mut inv = inverter(1, 0.0, 500, 400, 0, 5, (0.0, 0.0), None);
+
+        // Only a5 (Line fail) active: warning on a grid-tied installation
+        let line_fail = format!("{:0<32}", "000001");
+        inv.qpiws = Some(qpiws::parse(&line_fail).unwrap());
+        inv.compute_calculated(100.0, false);
+        assert_eq!(inv.inverter_status, 1);
+
+        // Off-grid: no warning, but the bit is still reported
+        inv.compute_calculated(100.0, true);
+        assert_eq!(inv.inverter_status, 0);
+        assert_eq!(inv.qpiws.as_ref().unwrap().warn_line_fail, 1);
+        assert_eq!(compute(&[inv.clone()], &battery()).system_status, 0);
+
+        // Other warnings still count off-grid (a12 battery low)
+        let line_and_low = format!("{:0<32}", "0000010000001");
+        inv.qpiws = Some(qpiws::parse(&line_and_low).unwrap());
+        inv.compute_calculated(100.0, true);
+        assert_eq!(inv.inverter_status, 1);
     }
 
     #[test]

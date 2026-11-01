@@ -1129,6 +1129,7 @@ async function loadAndRenderAppConfig(btn, feedbackEl) {
         { field: 'delay_between_cycles_ms',    label: 'Delay Between Cycles (ms)',    type: 'number'   },
         { field: 'log_level',                  label: 'Log Level',                    type: 'text'     },
         { field: 'inverter_efficiency_percent', label: 'Inverter Efficiency (%)',     type: 'number'   },
+        { field: 'off_grid_installation',      label: 'Off-grid Installation',        type: 'checkbox' },
       ]},
       { key: 'mqtt', title: 'MQTT / Broker', fields: [
         { field: 'broker_ip',    label: 'Broker IP',       type: 'text'     },
@@ -1161,7 +1162,8 @@ async function loadAndRenderAppConfig(btn, feedbackEl) {
         group.appendChild(el('label', { class: 'field-label', text: f.label, for: inputId }));
         const input = el('input', { type: f.type, id: inputId,
           'data-section': sec.key, 'data-field': f.field });
-        input.value = val;
+        if (f.type === 'checkbox') input.checked = val === true;
+        else input.value = val;
         group.appendChild(input);
         grid.appendChild(group);
       }
@@ -1229,7 +1231,9 @@ async function saveAppConfig(btn, feedbackEl) {
     const sec   = inp.getAttribute('data-section');
     const field = inp.getAttribute('data-field');
     if (!cfg[sec]) cfg[sec] = {};
-    cfg[sec][field] = inp.type === 'number' ? Number(inp.value) : inp.value;
+    if (inp.type === 'checkbox')    cfg[sec][field] = inp.checked;
+    else if (inp.type === 'number') cfg[sec][field] = Number(inp.value);
+    else                            cfg[sec][field] = inp.value;
   });
 
   // Collect inverter fields via data attributes
